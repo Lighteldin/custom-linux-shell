@@ -341,18 +341,18 @@ int main() {
         // remove trailing newline for clean parsing
         input[strcspn(input, "\n")] = 0;
 
+        // save command to history
+        if (history_count < MAX_HISTORY) {
+            strcpy(history[history_count], input);
+            history_count++;
+        }
+
         char *args[MAX_ARGS];
 
         parse_input(input, args);
 
 
         if (args[0] == NULL) continue; // ignore empty input
-
-        // save command to history
-        if (history_count < MAX_HISTORY) {
-            strcpy(history[history_count], input);
-            history_count++;
-        }
 
         int background = 0;
 
