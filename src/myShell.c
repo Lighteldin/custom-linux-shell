@@ -2,6 +2,7 @@
 
 char history[MAX_HISTORY][MAX_INPUT];
 int history_count = 0;
+static char prev_dir[MAX_INPUT] = "";
 
 /* ——————————————————————————————————————————————————————————————
  * > parse_input
@@ -203,25 +204,83 @@ void execute_command(char **args, int background) {
  * —————————————————————————————————————————————————————————————— */
 int handle_builtin_commands(char **args) {
 
-    // exit: terminate shell immediately
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // command exit: terminate shell immediately
     if (strcmp(args[0], "exit") == 0) {
         exit(0);
     }
+    
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // cd: change directory (requires special handling)
+    // command cd: change directory
     if (strcmp(args[0], "cd") == 0) {
+        char *target;
+        char cwd[MAX_INPUT];
 
+        // Get current directory
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            perror("cd: getcwd");
+            return 1;
+        }
+
+        // Handle error: too many args
+        if (args[1] && args[2]) {
+            fprintf(stderr, "cd: too many arguments\n");
+            return 1;
+        }
+
+        // Handle error: no argument → go to HOME
         if (args[1] == NULL) {
-            printf("cd: missing argument\n");
+            target = getenv("HOME");
+            if (target == NULL) {
+                fprintf(stderr, "cd: HOME not set\n");
+                return 1;
+            }
         }
-        else if (chdir(args[1]) != 0) {
-            perror("cd error");
+
+        // cd -
+        else if (strcmp(args[1], "-") == 0) {
+            if (prev_dir[0] == '\0') {
+                fprintf(stderr, "cd: no previous directory yet\n");
+                return 1;
+            }
+            target = prev_dir;
         }
+        
+        // cd ~
+        else if (strcmp(args[1], "~") == 0) {
+            target = getenv("HOME");
+            if (target == NULL) {
+                fprintf(stderr, "cd: HOME not set\n");
+                return 1;
+            }
+        }
+
+        // cd {directory}
+        else {
+            target = args[1];
+        }
+        if (chdir(target) != 0) {
+            perror("cd");
+            return 1;
+        }
+
+        // Bash prints the directory after successful "cd -"
+        if (args[1] && strcmp(args[1], "-") == 0) {
+            printf("%s\n", target);
+        }
+
+        // Update previous directory AFTER successful chdir
+        strncpy(prev_dir, cwd, MAX_INPUT);
+        prev_dir[MAX_INPUT - 1] = '\0';
 
         return 1;
     }
 
-    // pwd: print current working directory
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // command pwd: print current working directory
     if (strcmp(args[0], "pwd") == 0) {
 
         char cwd[1024];
@@ -235,7 +294,9 @@ int handle_builtin_commands(char **args) {
         return 1;
     }
 
-    // history: prints all previous commands
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // command history: prints all previous commands
     if (strcmp(args[0], "history") == 0) {
 
         for (int i = 0; i < history_count; i++) {
@@ -244,6 +305,8 @@ int handle_builtin_commands(char **args) {
 
         return 1;
     }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     return 0; // not a built-in command
 }
