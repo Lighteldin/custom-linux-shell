@@ -9,6 +9,17 @@
 A custom shell implemented in C that supports command execution, input/output redirection,
 piping, background processes, and built-in commands such as: **cd**, **pwd**, and **history**.
 
+## Built by
+
+<p align="center">
+
+<img src="https://img.shields.io/badge/C Systems Programming-00599C?style=for-the-badge&logo=c&logoColor=white" />
+<img src="https://img.shields.io/badge/Unix / Linux Internals-FCC624?style=for-the-badge&logo=linux&logoColor=black" />
+<img src="https://img.shields.io/badge/Bash Scripting-121011?style=for-the-badge&logo=gnubash&logoColor=white" />
+
+
+</p>
+
 ## Features
 
 - Execute external commands using fork and execvp
